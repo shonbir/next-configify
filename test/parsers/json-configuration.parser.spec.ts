@@ -10,6 +10,7 @@ describe('JsonConfigurationParser', () => {
       expect(config).toEqual({
         'any-key-one': 'any-value-one',
         'any-key-two': 'any-value-two',
+        "myEnvKey": "my-env-key",
       });
     });
   });

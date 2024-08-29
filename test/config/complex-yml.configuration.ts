@@ -6,6 +6,10 @@ export interface YmlJsonContent {
 
 @Configuration()
 export class ComplexYmlConfiguration {
+
+  @Value('nested.myEnvKey')
+  myEnvKey: string;
+
   @Value('any-key')
   anyKey: string;
 
@@ -25,7 +29,7 @@ export class ComplexYmlConfiguration {
   booleanContent: boolean;
 
   @Value('json-content', {
-    parse: (value: any) => JSON.parse(value),
+    parse: (value: any) => { if(value) return JSON.parse(value)},
   })
   jsonContent: YmlJsonContent;
 }

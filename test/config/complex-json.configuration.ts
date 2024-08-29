@@ -2,6 +2,10 @@ import { Configuration, Value } from '../../src';
 
 @Configuration()
 export class ComplexJsonConfiguration {
+
+  @Value('nested.myEnvKey')
+  myEnvKey: string;
+
   @Value('nested.any-key')
   anyKey: string;
 

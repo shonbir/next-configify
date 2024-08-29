@@ -33,6 +33,16 @@ import { Variables } from './interpolation/variables';
  */
 @Module({})
 export class ConfigifyModule {
+
+  /**
+   * The default nested configuration keys separator
+   */
+  private static readonly DEFAULT_CONFIG_KEY_SEPARATOR = ".";
+  /**
+   * The sperators supported by the lib
+   */
+  private static readonly SUPPORTED_CONFIG_KEY_SEPARATOR = [ConfigifyModule.DEFAULT_CONFIG_KEY_SEPARATOR, "_"];
+
   /**
    * The default configuration files.
    * If no configuration files are provided this module will
@@ -42,6 +52,7 @@ export class ConfigifyModule {
   private static readonly DEFAULT_CONFIG_FILES = [
     resolve(process.cwd(), '.env'),
     resolve(process.cwd(), 'application.yml'),
+    resolve(process.cwd(), 'application.yaml'),
     resolve(process.cwd(), 'application.json'),
   ];
 
@@ -75,15 +86,31 @@ export class ConfigifyModule {
    * @returns { DynamicModule }         module  The configy module
    */
   static async forRootAsync(
-    options: ConfigfyModuleOptions = {},
+    options: ConfigfyModuleOptions = {nestedConfigPropertySeparator: this.DEFAULT_CONFIG_KEY_SEPARATOR, uppercaseConfigProperty: false},
   ): Promise<DynamicModule> {
     const settings = { ...options, ...DefaultConfigfyModuleOptions };
+    if (options.envProfile){
+      settings.configFilePath = settings.configFilePath || [];
+      settings.configFilePath = [].concat(settings.configFilePath, [
+          resolve(process.cwd(), `.${options.envProfile}.env`),
+          resolve(process.cwd(), `application-${options.envProfile}.yml`),
+          resolve(process.cwd(), `application-${options.envProfile}.yaml`),
+          resolve(process.cwd(), `application-${options.envProfile}.json`),
+      ]);
+    }
     const files = this.resolveConfigurationFiles(settings.configFilePath);
-
+    let validSeparator = false;
+    for (let separator of ConfigifyModule.SUPPORTED_CONFIG_KEY_SEPARATOR){
+        if(options.nestedConfigPropertySeparator === separator){
+          validSeparator = true;
+          break;
+        }
+    }
+    options.nestedConfigPropertySeparator = validSeparator ? options.nestedConfigPropertySeparator : this.DEFAULT_CONFIG_KEY_SEPARATOR;
     const envVars = settings.ignoreEnvVars ? {} : process.env;
     const fromFile = settings.ignoreConfigFile
       ? {}
-      : this.parseConfigurationFiles(files);
+      : this.parseConfigurationFiles(files,options);
 
     const container = { ...envVars, ...fromFile };
     const secrets = await this.runSecretsResolverPipeline(container, settings);
@@ -96,7 +123,7 @@ export class ConfigifyModule {
 
     Object.assign(process.env, configuration);
 
-    const { exports, providers } = this.buildConfigurationProviders();
+    const { exports, providers } = this.buildConfigurationProviders(options);
 
     return {
       exports,
@@ -133,7 +160,7 @@ export class ConfigifyModule {
    *
    * @returns {ConfigurationProviders} the module configuration providers
    */
-  private static buildConfigurationProviders(): ConfigurationProviders {
+  private static buildConfigurationProviders(options:ConfigfyModuleOptions): ConfigurationProviders {
     const exports = [];
     const providers: Provider[] = [];
 
@@ -151,9 +178,13 @@ export class ConfigifyModule {
         );
 
         const parse = metadata.options?.parse;
+        let metaKey = options.uppercaseConfigProperty ? metadata.key.toUpperCase() : metadata.key;
+        if(ConfigifyModule.DEFAULT_CONFIG_KEY_SEPARATOR !== options.nestedConfigPropertySeparator){
+            metaKey = metaKey.split(ConfigifyModule.DEFAULT_CONFIG_KEY_SEPARATOR).join(options.nestedConfigPropertySeparator);
+        }
         const value = parse
-          ? parse(process.env[metadata.key])
-          : process.env[metadata.key];
+          ? parse(process.env[metaKey])
+          : process.env[metaKey];
 
         instance[attribute] = value;
       }
@@ -191,13 +222,16 @@ export class ConfigifyModule {
     source: any,
     path: string[] = [],
     target: Record<string, any> = {},
+    keySeparator:string, 
+    isUppercase: boolean
   ) {
     if (typeof source === 'object') {
       for (const key in source) {
-        this.flattenObjectKeys(source[key], [...path, key], target);
+        this.flattenObjectKeys(source[key], [...path, key], target, keySeparator, isUppercase);
       }
     } else {
-      target[path.join('.')] = source;
+      path = path.map((val) => isUppercase ? val.toUpperCase(): val)
+      target[path.join(keySeparator)] = source;
     }
   }
 
@@ -207,7 +241,7 @@ export class ConfigifyModule {
    * @param   {string[]} files  the configuration file paths
    * @returns {object}          the object representation of the configuration files
    */
-  private static parseConfigurationFiles(files: string[]): Record<string, any> {
+  private static parseConfigurationFiles(files: string[], options: ConfigfyModuleOptions): Record<string, any> {
     const kv = {};
     const config = {};
 
@@ -217,7 +251,7 @@ export class ConfigifyModule {
       Object.assign(config, parsed);
     }
 
-    this.flattenObjectKeys(config, [], kv);
+    this.flattenObjectKeys(config, [], kv, options.nestedConfigPropertySeparator, options.uppercaseConfigProperty);
 
     return kv;
   }

@@ -7,4 +7,7 @@ export class BasicYmlConfiguration {
 
   @Value('application.any-key-two')
   anyKeyTwo: string;
+  
+  @Value('application.myEnvKey')
+  myEnvKey: string;
 }

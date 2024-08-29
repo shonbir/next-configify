@@ -7,4 +7,7 @@ export class BasicJsonConfiguration {
 
   @Value('any-key-two')
   anyKeyTwo: string;
+
+  @Value('myEnvKey')
+  myEnvKey: string;
 }

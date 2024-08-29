@@ -74,6 +74,7 @@ describe('ConfigifyModule', () => {
 
       expect(provider.useValue).toEqual({
         anyKey: 'any-value',
+        myEnvKey: 'my-env-key',
         awsSecretsManagerSecret: secret,
         awsParameterStoreSecret: secret,
         numberContent: 1234,
@@ -106,6 +107,7 @@ describe('ConfigifyModule', () => {
 
       expect(provider.useValue).toEqual({
         anyKey: 'any-value',
+        myEnvKey: 'my-env-key',
         defaultValue: 'my-default-value',
         numberContent: 1234,
         booleanContent: true,
@@ -113,5 +115,79 @@ describe('ConfigifyModule', () => {
         awsParameterStoreSecret: secret,
       });
     });
+    it('should provide complex yml configuration with _ and Uppercase env', async () => {
+      const secret = 'secret-id';
+
+      secretsManagerSendMock.mockResolvedValue({ SecretString: secret });
+      systemsManagerSendMock.mockResolvedValue({
+        Parameter: { Value: secret },
+      });
+
+      const file = resolve(process.cwd(), 'test/config/.complex.yml');
+      const module = await ConfigifyModule.forRootAsync({
+        configFilePath: file,
+        nestedConfigPropertySeparator: "_",
+        uppercaseConfigProperty: true,
+      });
+
+      const provider = module.providers.filter(
+        (p) =>
+          (p as ValueProvider).useValue.constructor.name ===
+          ComplexYmlConfiguration.name,
+      )[0] as ValueProvider;
+
+      expect(provider.useValue).toEqual({
+        anyKey: 'any-value',
+        myEnvKey: 'my-env-key',
+        awsSecretsManagerSecret: secret,
+        awsParameterStoreSecret: "parameter-name",
+        numberContent: 1234,
+        booleanContent: true,
+        expandedEnv: secret,
+        jsonContent: {
+          host: 'localhost',
+        },
+      });
+    });
+
+    it('should provide complex yml configuration with _ and Uppercase env with envpofile', async () => {
+      const secret = 'secret-id';
+
+      secretsManagerSendMock.mockResolvedValue({ SecretString: secret });
+      systemsManagerSendMock.mockResolvedValue({
+        Parameter: { Value: secret },
+      });
+
+      const file = [
+        resolve(process.cwd(),'test/config/.complex.yml'),
+        resolve(process.cwd(), 'test/config/.complex-prod.yml')
+      ]
+      const module = await ConfigifyModule.forRootAsync({
+        configFilePath: file,
+        nestedConfigPropertySeparator: "_",
+        uppercaseConfigProperty: true,
+        envProfile: "prod",
+      });
+
+      const provider = module.providers.filter(
+        (p) =>
+          (p as ValueProvider).useValue.constructor.name ===
+          ComplexYmlConfiguration.name,
+      )[0] as ValueProvider;
+
+      expect(provider.useValue).toEqual({
+        anyKey: 'any-value',
+        myEnvKey: 'my-env-key-prod',
+        awsSecretsManagerSecret: secret,
+        awsParameterStoreSecret: "parameter-name",
+        numberContent: 1234,
+        booleanContent: true,
+        expandedEnv: secret,
+        jsonContent: {
+          host: 'localhost',
+        },
+      });
+    });
+
   });
 });

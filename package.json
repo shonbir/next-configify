@@ -1,13 +1,13 @@
 {
-  "name": "@itgorillaz/configify",
+  "name": "@shon/next-configify",
   "version": "1.2.3",
-  "description": "NestJS Config on Steroids",
-  "author": "tommelo",
+  "description": "NestJS Config on Next Steroids",
+  "author": "shonbir",
   "private": false,
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/it-gorillaz/configify.git"
+    "url": "git+https://github.com/shonbir/next-configify.git"
   },
   "keywords": [
     "nestjs",
@@ -16,9 +16,9 @@
     ".env"
   ],
   "bugs": {
-    "url": "https://github.com/it-gorillaz/configify/issues"
+    "url": "https://github.com/shonbir/next-configify/issues"
   },
-  "homepage": "https://github.com/it-gorillaz/configify#readme",
+  "homepage": "https://github.com/shonbir/next-configify#readme",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

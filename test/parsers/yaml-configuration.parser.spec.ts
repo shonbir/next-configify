@@ -11,6 +11,7 @@ describe('YamlConfigurationParser', () => {
         application: {
           'any-key-one': 'any-value-one',
           'any-key-two': 'any-value-two',
+          'myEnvKey': 'my-env-key',
         },
       });
     });

@@ -1,6 +1,7 @@
 {
   "nested": {
-    "any-key": "any-value"
+    "any-key": "any-value",
+    "myEnvKey": "my-env-key"
   },
   "default-value": "${non.existing.key:-my-default-value}",
   "expanded-secret": "${aws-secrets-manager.secret}",

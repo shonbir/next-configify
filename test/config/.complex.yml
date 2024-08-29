@@ -12,3 +12,5 @@ aws-secrets-manager:
 
 aws-parameter-store:
   secret: parameter-name
+nested:
+  myEnvKey: my-env-key
