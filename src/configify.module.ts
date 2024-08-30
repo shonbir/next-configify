@@ -92,10 +92,10 @@ export class ConfigifyModule {
     if (options.envProfile){
       settings.configFilePath = settings.configFilePath || [];
       settings.configFilePath = [].concat(settings.configFilePath, [
-          resolve(process.cwd(), `.${options.envProfile}.env`),
-          resolve(process.cwd(), `application-${options.envProfile}.yml`),
-          resolve(process.cwd(), `application-${options.envProfile}.yaml`),
-          resolve(process.cwd(), `application-${options.envProfile}.json`),
+        resolve(process.cwd(), `application-${options.envProfile}.yml`),
+        resolve(process.cwd(), `application-${options.envProfile}.yaml`),
+        resolve(process.cwd(), `application-${options.envProfile}.json`),
+        resolve(process.cwd(), `.${options.envProfile}.env`),
       ]);
     }
     const files = this.resolveConfigurationFiles(settings.configFilePath);
@@ -266,7 +266,7 @@ export class ConfigifyModule {
    */
   private static resolveConfigurationFiles(path?: string | string[]): string[] {
     return []
-      .concat(path, this.DEFAULT_CONFIG_FILES)
+      .concat(this.DEFAULT_CONFIG_FILES, path)
       .filter(
         (file) =>
           fs.existsSync(file) && ConfigurationParserFactory.supports(file),
